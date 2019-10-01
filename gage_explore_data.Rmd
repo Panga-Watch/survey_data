@@ -1,0 +1,75 @@
+---
+title: "Gage Survey Data Explore"
+author: "Gage Clawson"
+date: "10/1/2019"
+output: html_document
+---
+
+## Summary
+[general description: What analysis is this conducting? Why (what project, etc.)? Other information?]
+ 
+## Data Source 
+Personal Interviews
+ 
+## Reference 
+Panga Watch
+ 
+## Downloaded
+September 30, 2019
+ 
+Time range: 
+2019-2019
+ 
+## Format
+comma separated values
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+master_surv_resp <- read_csv("master_survey_resp.csv")
+```
+
+Determine if I have questions about variables in the data
+
+```{r}
+## survey_type
+unique(master_surv_resp$survey_type)
+#[1] "D"    "FLAG"
+# there is only one "FLAG" observation....
+## What does "FLAG" mean? "D" means "Data Collection". How come there are no "training" or "t" observations, as specified in "Survey Key.xlsx"? 
+
+## survey_id
+length(unique(master_surv_resp$survey_id))
+## makes sense... each observation has it's own survey_id. The first number corresponds to the administered location. 
+
+## survey_version
+unique(master_surv_resp$survey_version)
+#16. Corresponds to each choice experiment. 
+
+## interviewer
+# name of each interviewer. There are three "JS"'s. What do the *'s mean? 
+
+## interviewer_Org 
+# the interviewer's organization
+unique(master_surv_resp$interviewer_Org)
+# we had 4 different organizations helping to administer surveys!
+
+## community
+unique(master_surv_resp$community)
+# [1] "RAJ" "MAK" "MNC" "PSC" "ALT" "TTN" "WKB"
+# What is "WKB"? Not specified in "Survey Key.xlsx"
+# What does "TTN" stand for? 
+# "MAK" means "Muara Angke".
+
+## gear columns
+# Each gear column specifies whether they use a certain type of gear or not. 1 for yes, 0 for no.
+
+
+
+
+```
+
