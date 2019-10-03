@@ -1,0 +1,57 @@
+---
+title: "br_explore_data"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+```
+
+Reading in the survey, filtering only for Mexico
+```{r, include=FALSE}
+master_surv_resp <- read_csv("master_survey_resp.csv")
+
+colnames(master_surv_resp)
+surv_mx<- master_surv_resp %>% 
+  filter(country=="MEX")
+```
+
+Investigating target species distribution by community
+```{r, include=FALSE}
+#select relevant data and convert to long form 
+ts_mx<-surv_mx %>% 
+  select(community, 67:69) %>% 
+  gather(key = target_number, value = species, -community) %>% 
+  filter(!is.na(species)) %>% 
+  mutate(target_number = factor(target_number))
+
+
+#PSC
+psc_ts<-ts_mx %>% 
+  filter(community=="PSC") %>% 
+  group_by(target_number) %>% 
+  count(species)
+
+unique(psc_ts$species) #23 different species named in psc
+
+#Altata
+alt_ts<-ts_mx %>% 
+  filter(community=="ALT") %>% 
+  group_by(target_number)
+
+unique(alt_ts$species) #13 different species named in psc
+
+#Tetuan
+ttn_ts<-ts_mx %>% 
+  filter(community=="TTN") %>% 
+  group_by(target_number)
+
+unique(ttn_ts$species) #6 different species named in psc
+
+
+
+unique(ts_mx$species)
+```
+
