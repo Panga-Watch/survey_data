@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ## Summary
-[general description: What analysis is this conducting? Why (what project, etc.)? Other information?]
+First look through of data for Gage 
  
 ## Data Source 
 Personal Interviews
@@ -18,7 +18,7 @@ Panga Watch
 September 30, 2019
  
 Time range: 
-2019-2019
+2019
  
 ## Format
 comma separated values
@@ -61,15 +61,102 @@ unique(master_surv_resp$interviewer_Org)
 ## community
 unique(master_surv_resp$community)
 # [1] "RAJ" "MAK" "MNC" "PSC" "ALT" "TTN" "WKB"
-# What is "WKB"? Not specified in "Survey Key.xlsx"
+
+count(master_surv_resp, vars = community)
+# ALT	37			
+# MAK	59			
+# MNC	27			
+# PSC	46			
+# RAJ	18			
+# TTN	4			
+# WKB	14	
+
+# What is "WKB"? Not specified in "Survey Key.xlsx" -- probably Wakatobi, Indonesia 
 # What does "TTN" stand for? 
 # "MAK" means "Muara Angke".
 
 ## gear columns
 # Each gear column specifies whether they use a certain type of gear or not. 1 for yes, 0 for no.
 
+## positive_tracking_tech_one
+## positive_tracking_tech_two
+## negative_tracking_tech_one
+## negative_tracking_tech_two
+# do these need to be translated? 
 
+## wtp_1 
+# $5 
+
+## wtp_2 
+# $10
+
+## wtp_3 
+# $15
+
+## wtp_4 
+# $20
+
+## wtr_1
+# $5
+
+## wtr_2
+# $10
+
+## wtr_3 
+# $15
+
+## wtr_4
+# $20
+
+############## What does it mean when there are NAs in the above columns? 
+
+## tracking_negative
+## tracking_positive 
+# do these need to be translated? 
+
+## design_**
+# Note to self: Should check these to see that none of them have chosen > 3 benefits... probably some sort of filter on each of these columns or something...
+
+## text_vms_adoption
+# translate? 
+
+## target_species_*** 
+# translate?
+
+## fraction_**
+# Note to self: check to see if these all add up to 100%
+
+## other_fraction
+# translate?
+
+## fishing_org_type
+# what do NAs in this column mean? 
+
+## other_access
+# translate 
+
+## other_restriction
+# translate 
+
+## rank_***
+# is there a reason there are NAs in these? For instance, an observation has rank_1,2,3 all NA, but rank_four is filled out.
+
+## catch_trends 
+# this is ok
+
+## opinion_*
+# why are there a couple NAs?
+
+## trust_*
+# looks ok. Maybe a couple of NAs...
+
+## income
+# do we need to change the currency?
 
 
 ```
 
+General notes: 
+ - Confused about what NAs in the dataset mean. Could they skip questions? 
+ - Is there a translated version of the dataset? 
+ 
