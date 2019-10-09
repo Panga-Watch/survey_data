@@ -11,6 +11,7 @@ library(plotly)
 library(ggplot2)
 library(ggpubr)
 library(reshape2)
+library(likert) #for agree/disagree, trust/do not trust, satisfied/not satisfied questions
 ```
 
 Reading in the survey, filtering only for Mexico
@@ -282,6 +283,23 @@ rank<- survey %>%
   theme_pubclean()
 
 rank
+
+rank2<-survey %>% 
+  select(8, 110:113) %>% 
+  gather(rank, problem, -country)%>% 
+  mutate(rank = factor(rank, levels = c("rank_one", "rank_two", "rank_three", "rank_four")))%>% 
+  group_by(country, rank) %>%
+  count(problem) %>% 
+  na.omit() 
+rank2
+
+ggplot(rank2, aes(x = problem, y = n))+
+  geom_bar(
+    aes(fill = rank), stat = "identity", color = "white",
+    position = position_dodge(0.9)
+    )+
+  facet_wrap(~country) + 
+  fill_palette("jco")
 ```
 
 
@@ -298,15 +316,33 @@ trend<- survey %>%
 
 trend
 ```
-36. How much do you agree with the following statements	a. Formal stock assessments help to sustainably manage fisheries
-	b. I have many options if I decide to no longer be a fisher
-	c. In general, the fisheries in this region are doing well
-	d. I am worried about the future of our fishery resources
-	e. Outside small-scale fishers are always entering our fishing grounds/concession
-	f. Outside industrial fishers are always entering our fishing grounds/concession
-	g. Everyone in the fishing community knows where other fishers go (there are no secret spots)
-	h. In general, my fishing activity implies severe risks to my life
-	i. I feel I have a voice in how my fishing area is managed
+#36. How much do you agree with the following statements	
+##a. Formal stock assessments help to sustainably manage fisheries
+##b. I have many options if I decide to no longer be a fisher
+##c. In general, the fisheries in this region are doing well
+##d. I am worried about the future of our fishery resources
+##e. Outside small-scale fishers are always entering our fishing grounds/concession
+##f. Outside industrial fishers are always entering our fishing grounds/concession
+##g. Everyone in the fishing community knows where other fishers go (there are no secret spots)
+##h. In general, my fishing activity implies severe risks to my life
+##i. I feel I have a voice in how my fishing area is managed
+
+```{r}
+agree<- survey %>% 
+  select(8, 115:123) %>% 
+  gather(statement, likert, -country) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) 
+
+summary(agree)
+ggplot(aes(x=catch_trends, fill=country))+
+  geom_bar()+
+    geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color="white")+
+  theme_pubclean()
+
+agree
+```
+
 37. Please indicate how much you trust the following groups	a. Other members in my fishing community
 	b. Other fishing communities in the region
 	c. Fishing association leaders
@@ -319,9 +355,31 @@ trend
 	j. National Government
 	k. Local Government
 	l. Private Companies
-38. Please indicate how satisfied you were when working with the following organizations	a. Non-Governmental Organizations
+	
+```{r}
+trust<- survey %>% 
+  select(8, 124:135) %>% 
+  gather(group, likert, -country) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5)))
+
+trust
+```
+
+38. Please indicate how satisfied you were when working with the following organizations	
+  a. Non-Governmental Organizations
 	b. Private Companies
 	c. Government Organizations
+```{r}
+satisfaction<- survey %>% 
+  select(8, 136:138) %>% 
+  gather(organization, likert, -country) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(0,1,2,3,4,5)))
+
+satisfaction
+```
+
 39. What is your age?	
 40. How many years have you been fishing?	
 41.What is your level of education? (Please choose one)	
