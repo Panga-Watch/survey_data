@@ -9,6 +9,7 @@ library(tidyverse)
 library(dplyr)
 library(plotly)
 library(ggplot2)
+library(ggpubr)
 library(reshape2)
 ```
 
@@ -26,22 +27,305 @@ gear<- survey %>%
   select(8,11:17) %>% 
   gather(gear, use, -country) %>% 
   filter(use==1) %>% 
-  ggplot(aes(x=gear, fill=country))+geom_bar()
+  ggplot(aes(x=gear, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
 
 gear
 ```
 #5. Boat Ownership
 ```{r}
-ggplot(survey, aes(x=boat_status, fill=country))+geom_bar()
+ggplot(survey, aes(x=boat_status, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
 ```
 #6.
-#a. Boat Length
+##a. Boat Length
 ```{r}
 ggplot(survey, aes(x=boat_length_m, fill=country))+geom_histogram()
-
-
 ```
+##b. Material
 ```{r}
+ggplot(survey, aes(x=boat_material, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+```
+
+##c. Is the boat motorized
+```{r}
+ggplot(survey, aes(x=boat_motorized, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+```
+
+##d. Is there an onboard power/ electricity source?
+
+```{r}
+ggplot(survey, aes(x=boat_power, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+```
+
+#7. Please check all the types of technology that you use at least once a week, if any
+```{r}
+#Changing wide to long form for gear
+
+tech<- survey %>% 
+  select(8,25:29) %>% 
+  gather(tech, use, -country) %>% 
+  filter(use==1) %>% 
+  ggplot(aes(x=tech, fill=country))+
+  geom_bar()+
+   geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+
+tech
+```
+
+#8. Please check all the types of technology that you use or have used at some point for your fishing activity
+```{r}
+#Changing wide to long form for gear
+
+fish_tech<- survey %>% 
+  select(8,31:38) %>% 
+  gather(fish_tech, use, -country) %>% 
+  filter(use==1) %>% 
+  ggplot(aes(x=fish_tech, fill=country))+
+  geom_bar()+
+   geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+
+fish_tech
+```
+
+#9. What type of tracking technology did you use on your vessel?
+```{r}
+table(survey$text_vms)
+```
+
+#20. Combining all seasons, what are your top three targeted fisheries?
+```{r}
+target_sp<- survey %>% 
+  select(8,67:69) %>% 
+  gather(target, sp, -country)
+
+#counts table
+target_tb<-target_sp %>% 
+  group_by(target, sp) %>% 
+  count()
+
+target_tb
+
+#bar plot
+ggplot(target_sp, aes(x=sp, fill=target))+
+  geom_bar()+
+   geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+
 
 ```
 
+#21. What percent of the total catch (out of 100%) goes to...	
+  a. Own/household consumption
+	b. Shared to neighboring household
+	c. Traded in local market
+	d. Export
+	e. Other
+```{r}
+#a. Own/household consumption
+ggplot(survey, aes(x=fraction_personal, fill=country))+geom_histogram()
+
+#b. Shared to neighboring household
+ggplot(survey, aes(x=fraction_neighbor, fill=country))+geom_histogram()
+
+#c. Traded in local market
+ggplot(survey, aes(x=fraction_local_trade, fill=country))+geom_histogram()
+
+#d. Export
+ggplot(survey, aes(x=fraction_export, fill=country))+geom_histogram()
+
+#e. Other
+ggplot(survey, aes(x=fraction_other, fill=country))+geom_histogram()
+
+```
+21.x Other	
+```{r}
+unique(survey$other_fraction)
+```
+
+22. Are you part of a fishing organization?	
+```{r}
+ggplot(survey, aes(x=fishing_organization, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5))+
+  theme_pubclean()
+```
+
+23. What type of organization?
+```{r}
+ggplot(survey, aes(x=fishing_organization, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5))+
+  theme_pubclean()
+```
+Other	
+
+
+24. What role do you have in the organization?	
+```{r}
+ggplot(survey, aes(x=fishing_organization, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5))+
+  theme_pubclean()
+```
+Other	
+25. How many members does the organization have?
+```{r}
+ggplot(survey, aes(x=factor(1), y=fishing_org_members))+
+  geom_jitter(aes(color=country))+
+  labs(x=NULL)
+```
+
+26. Who is allowed to fish for your #1 targeted fishery, ${target_species_one} ?	
+```{r}
+ggplot(survey, aes(x=access_target_species, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color="white")+
+  theme_pubclean()
+```
+Other	
+
+#27. Please indicate what restrictions exist for your #1 targeted fisherie, ${target_species_one}.	
+```{r}
+restrictions<- survey %>% 
+  select(8,84:90) %>% 
+  gather(regulations, n, -country) %>% 
+  filter(n==1) %>% 
+  ggplot(aes(x=restrictions, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+
+restrictions
+```
+Other	
+
+#28. Who is responsible for enforcement in your community?	
+```{r}
+enforcement<- survey %>% 
+  select(8,92:98) %>% 
+  gather(enforcement, n, -country) %>% 
+  filter(n==1) %>% 
+  ggplot(aes(x=enforcement, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+
+enforcement
+```
+Other	
+
+#29. On average, how often are fishing regulations enforced?	
+```{r}
+ggplot(survey, aes(x=enforcement_interval, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color="white")+
+  theme_pubclean()
+```
+Other	
+
+#30. How severe is the punishment when a person gets caught violating the fishing regulations?	
+```{r}
+ggplot(survey, aes(x=punishment_severity, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color="white")+
+  theme_pubclean()
+```
+
+#31. Are there any closed areas in your fishing area?	
+```{r}
+ggplot(survey, aes(x=mpa, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color="white")+
+  theme_pubclean()
+```
+#32. Wat do you think are the biggest problems your fishery faces?	
+  1.
+	2.
+	3.
+
+
+#33. How do you think the problems you mentioned can be solved?	
+  1.
+	2.
+	3.
+
+34. Please rank the following problems from 1 to 4, where 1 has the strongest impact on your fishing activity and 4 has the least impact on your fishing activity	
+  Rank 1.
+	Rank 2.
+	Rank 3.
+	Rank 4.
+	
+```{r}
+rank<- survey %>% 
+  select(110:113) %>% 
+  gather(rank, problem) %>% 
+  group_by(problem) %>% 
+  na.omit() %>%
+  ggplot(aes(x=problem))+
+  geom_bar(aes(fill=rank), position=position_dodge(0.8), width=0.8)+
+  theme_pubclean()
+
+rank
+```
+
+
+
+35. In the last few years, the current fish catch has…
+```{r}
+trend<- survey %>% 
+  select(8, 114) %>% 
+  na.omit() %>%
+  ggplot(aes(x=catch_trends, fill=country))+
+  geom_bar()+
+    geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color="white")+
+  theme_pubclean()
+
+trend
+```
+36. How much do you agree with the following statements	a. Formal stock assessments help to sustainably manage fisheries
+	b. I have many options if I decide to no longer be a fisher
+	c. In general, the fisheries in this region are doing well
+	d. I am worried about the future of our fishery resources
+	e. Outside small-scale fishers are always entering our fishing grounds/concession
+	f. Outside industrial fishers are always entering our fishing grounds/concession
+	g. Everyone in the fishing community knows where other fishers go (there are no secret spots)
+	h. In general, my fishing activity implies severe risks to my life
+	i. I feel I have a voice in how my fishing area is managed
+37. Please indicate how much you trust the following groups	a. Other members in my fishing community
+	b. Other fishing communities in the region
+	c. Fishing association leaders
+	d. Fisheries officers
+	e. Police or security that might enforce poaching events
+	f. Consultants that conduct assessments with fishing associations
+	g. Fishery scientists
+	h. Local conservation groups
+	i. Non-Governmental Organizations
+	j. National Government
+	k. Local Government
+	l. Private Companies
+38. Please indicate how satisfied you were when working with the following organizations	a. Non-Governmental Organizations
+	b. Private Companies
+	c. Government Organizations
+39. What is your age?	
+40. How many years have you been fishing?	
+41.What is your level of education? (Please choose one)	
+Other	
+42. What is your average monthly income?	
+43. What percent (out of 100%) of your annual income comes from fishing?	
+44. What percent (out of 100%) of your income is spent on expenses related to fishing?	
