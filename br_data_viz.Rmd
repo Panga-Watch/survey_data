@@ -1,0 +1,47 @@
+---
+title: "BR GFW Report 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(plotly)
+library(ggplot2)
+library(reshape2)
+```
+
+Reading in the survey, filtering only for Mexico
+```{r, include=FALSE}
+survey <- read_csv("master_survey_resp.csv")
+
+head(survey)
+```
+#4. Gear
+```{r}
+#Changing wide to long form for gear
+
+gear<- survey %>% 
+  select(8,11:17) %>% 
+  gather(gear, use, -country) %>% 
+  filter(use==1) %>% 
+  ggplot(aes(x=gear, fill=country))+geom_bar()
+
+gear
+```
+#5. Boat Ownership
+```{r}
+ggplot(survey, aes(x=boat_status, fill=country))+geom_bar()
+```
+#6.
+#a. Boat Length
+```{r}
+ggplot(survey, aes(x=boat_length_m, fill=country))+geom_histogram()
+
+
+```
+```{r}
+
+```
+
