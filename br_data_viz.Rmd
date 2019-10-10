@@ -512,9 +512,53 @@ plot(sat_res_mx,
 ```
 
 39. What is your age?	
+```{r}
+ggplot(survey, aes(x=age))+
+  geom_histogram(position = "identity", color="black", fill="gray")+
+  theme_pubclean()+
+  geom_vline(aes(xintercept=mean(age)), linetype = "dashed", size=0.6)
+```
+
 40. How many years have you been fishing?	
+```{r}
+ggplot(survey, aes(x=years_fishing))+
+  geom_histogram(position = "identity", color="black", fill="gray")+
+  theme_pubclean()+
+  geom_vline(aes(xintercept=mean(years_fishing)), linetype = "dashed", size=0.6)
+```
+
 41.What is your level of education? (Please choose one)	
+```{r}
+ggplot(survey, aes(x=education, fill=country))+
+  geom_bar()+
+  geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color = "white")+
+  theme_pubclean()
+```
+
+
 Other	
-42. What is your average monthly income?	
+
+42. What is your average monthly income?
+```{r}
+ggplot(survey, aes(x=income))+
+  geom_histogram(aes(color=country), fill="white", position="identity")+
+  facet_wrap(~country, scales="free")+
+  theme_pubclean()
+```
+
+
 43. What percent (out of 100%) of your annual income comes from fishing?	
+```{r}
+ggplot(survey, aes(x=income_fishing, fill=country))+
+  geom_histogram(bins=10, color="white")+
+  theme_pubclean()
+```
+
 44. What percent (out of 100%) of your income is spent on expenses related to fishing?	
+
+```{r}
+ggplot(survey, aes(x=income_expenses, fill=country))+
+  geom_histogram(bins=10, color="white")+
+  theme_pubclean()
+```
+
