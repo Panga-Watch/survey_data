@@ -328,19 +328,58 @@ trend
 ##i. I feel I have a voice in how my fishing area is managed
 
 ```{r}
+#making subset and summary of counts for Q. 36
 agree<- survey %>% 
   select(8, 115:123) %>% 
   gather(statement, likert, -country) %>% 
   na.omit() %>%
-  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) 
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) %>% 
+  group_by(country,statement) %>% 
+  count(likert) %>% 
+  spread(key=likert, value=n) %>% 
+  ungroup() %>% 
+  mutate_all(funs(ifelse(is.na(.), 0, .))) %>% 
+  mutate(n = rowSums(.[3:7]))
 
-summary(agree)
-ggplot(aes(x=catch_trends, fill=country))+
-  geom_bar()+
-    geom_text(stat = 'count', aes(label = ..count..), position = position_stack(vjust = .5), color="white")+
-  theme_pubclean()
+#indonesia results
+ind_agree<-survey %>% 
+  filter(country=="IND") %>% 
+  select(4, 115:123) %>% 
+  gather(statement, likert, -survey_id) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) %>% 
+  mutate(statement = factor(statement)) %>% 
+  spread(statement, likert) %>% 
+  select(-survey_id) %>% 
+  data.frame()
 
-agree
+agree_res_ind<-likert(ind_agree)
+summary(agree_res_ind)
+
+#mexico results
+mx_agree<-survey %>% 
+  filter(country=="MEX") %>% 
+  select(4, 115:123) %>% 
+  gather(statement, likert, -survey_id) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) %>% 
+  mutate(statement = factor(statement)) %>% 
+  spread(statement, likert) %>% 
+  select(-survey_id) %>% 
+  data.frame()
+
+agree_res_mx<-likert(mx_agree)
+summary(agree_res_mx)
+
+
+#plots
+
+plot(agree_res_ind,
+     type="bar")
+
+plot(agree_res_mx,
+     type="bar")
+
 ```
 
 37. Please indicate how much you trust the following groups	a. Other members in my fishing community
@@ -357,13 +396,59 @@ agree
 	l. Private Companies
 	
 ```{r}
-trust<- survey %>% 
+#making subset and summary of counts for Q. 37
+agree<- survey %>% 
   select(8, 124:135) %>% 
   gather(group, likert, -country) %>% 
   na.omit() %>%
-  mutate(likert = factor(likert, levels = c(1,2,3,4,5)))
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) %>% 
+  group_by(country,group) %>% 
+  count(likert) %>% 
+  spread(key=likert, value=n) %>% 
+  ungroup() %>% 
+  mutate_all(funs(ifelse(is.na(.), 0, .))) %>% 
+  mutate(n = rowSums(.[3:7]))
 
-trust
+#indonesia results
+ind_trust<-survey %>% 
+  filter(country=="IND") %>% 
+  select(4, 124:135) %>% 
+  gather(group, likert, -survey_id) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) %>% 
+  mutate(group = factor(group)) %>% 
+  spread(group, likert) %>% 
+  select(-survey_id) %>% 
+  data.frame()
+
+trust_res_ind<-likert(ind_trust)
+summary(trust_res_ind)
+
+#mexico results
+mx_trust<-survey %>% 
+  filter(country=="MEX") %>% 
+  select(4, 124:135) %>% 
+  gather(group, likert, -survey_id) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) %>% 
+  mutate(group = factor(group)) %>% 
+  spread(group, likert) %>% 
+  select(-survey_id) %>% 
+  data.frame()
+
+trust_res_mx<-likert(mx_trust)
+summary(trust_res_mx)
+
+
+#plots
+
+plot(trust_res_ind,
+     type="bar")
+
+plot(trust_res_mx,
+     type="bar")
+
+
 ```
 
 38. Please indicate how satisfied you were when working with the following organizations	
@@ -371,13 +456,59 @@ trust
 	b. Private Companies
 	c. Government Organizations
 ```{r}
+
+#making subset and summary of counts for Q. 37
 satisfaction<- survey %>% 
   select(8, 136:138) %>% 
-  gather(organization, likert, -country) %>% 
+  gather(group, likert, -country) %>% 
   na.omit() %>%
-  mutate(likert = factor(likert, levels = c(0,1,2,3,4,5)))
+  mutate(likert = factor(likert, levels = c(0,1,2,3,4,5))) %>% 
+  group_by(country,group) %>% 
+  count(likert) %>% 
+  spread(key=likert, value=n) %>% 
+  ungroup() %>% 
+  mutate_all(funs(ifelse(is.na(.), 0, .))) %>% 
+  mutate(n = rowSums(.[3:7]))
 
-satisfaction
+#indonesia results
+ind_sat<-survey %>% 
+  filter(country=="IND") %>% 
+  select(4, 136:138) %>% 
+  gather(group, likert, -survey_id) %>% 
+  na.omit() %>%
+  mutate(likert = factor(likert, levels = c(0,1,2,3,4,5))) %>% 
+  mutate(group = factor(group)) %>% 
+  spread(group, likert) %>% 
+  select(-survey_id) %>% 
+  data.frame()
+
+sat_res_ind<-likert(ind_sat)
+summary(sat_res_ind)
+
+#mexico results
+mx_sat<-survey %>% 
+  filter(country=="MEX") %>% 
+  select(4, 136:138) %>% 
+  gather(group, likert, -survey_id) %>% 
+  na.omit() %>%
+  filter(likert!="0") %>% 
+  mutate(likert = factor(likert, levels = c(1,2,3,4,5))) %>% 
+  mutate(group = factor(group)) %>% 
+  spread(group, likert) %>% 
+  select(-survey_id) %>% 
+  data.frame()
+
+sat_res_mx<-likert(mx_sat)
+summary(sat_res_mx)
+
+
+#plots
+
+plot(sat_res_ind,
+     type="bar")
+
+plot(sat_res_mx,
+     type="bar")
 ```
 
 39. What is your age?	
