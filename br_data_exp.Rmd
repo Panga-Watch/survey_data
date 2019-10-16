@@ -55,3 +55,45 @@ unique(ttn_ts$species) #6 different species named in psc
 unique(ts_mx$species)
 ```
 
+```{r}
+version1<-version_to_package %>% 
+  filter(package<=16) %>% 
+  left_join(packages)
+
+survey_ce1<-master_survey_resp %>% 
+  select(survey_id, survey_version, choice) %>% 
+  mutate(RES = ifelse(choice == 1, 1, 0)) %>% 
+  merge(version1, all = TRUE) %>% 
+  arrange(survey_id) %>% 
+  mutate(STR=c(1:205)) 
+
+
+survey_ce2<-master_survey_resp %>% 
+  select(survey_id, survey_version, choice) %>% 
+  mutate(RES = ifelse(choice == 2, 1, 0)) %>% 
+  merge(version2, all = TRUE)%>% 
+  arrange(survey_id) %>% 
+  mutate(STR=c(1:205)) 
+
+
+version2<-version_to_package %>% 
+  filter(package>=17)%>% 
+  left_join(packages)
+
+survey_ce_total <- rbind(survey_ce1, survey_ce2)
+
+survey_ce<-survey_ce_total %>% 
+  mutate(ASC=1) %>% 
+  select(STR,RES, ASC, 6:8) %>% 
+  mutate(STR=STR*1000+1) %>% 
+  arrange(STR) 
+  
+```
+
+```{r}
+library(survival)
+
+clogout1<-clogit(RES~sos+info+own+strata(STR), data=survey_ce)
+
+```
+
