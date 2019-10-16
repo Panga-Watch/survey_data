@@ -163,6 +163,7 @@ General notes:
 ```{r}
 packages <- read_csv("packages.csv")
 ```
+## Binomial Logistic Regression Model
 
 ```{r}
 
@@ -187,8 +188,7 @@ survey_adopt_1_2 <- survey_matched %>%
          choice == 1 & package_nopackage == 0 ~ 0),
          adopt_two = 
          case_when(choice == 2 & package_nopackage == 1 ~ 1,
-         choice == 2 & package_nopackage == 0 ~ 0)) # logic for the packages they chose. Did they adopt or not...
-%>%
+         choice == 2 & package_nopackage == 0 ~ 0)) %>% # logic for the packages they chose. Did they adopt or not...
   mutate(adopt_one =
            ifelse(is.na(adopt_one) == TRUE, 0, adopt_one), # catches all instances where an adopt_*** should be assigned "0"
          adopt_two =
@@ -199,6 +199,7 @@ survey_adopt_1 <- survey_adopt_1_2[seq(1, nrow(survey_adopt_1_2), 2), ] #grab ev
 
 survey_adopt_2 <- survey_adopt_1_2[seq(2, nrow(survey_adopt_1_2), 2), ] #grab every other row starting from row two. This way we get all of the corret rows for the "adopt_two" column
 
+sum(survey_adopt_2$adopt_two == 0) #122.... 0.595122
 
 survey_adopt_1_final <- survey_adopt_1 %>%
   select(-7)  %>% # deselect adopt_two column
@@ -212,7 +213,7 @@ survey_adopt_final <- rbind(survey_adopt_1_final, survey_adopt_2_final)
 
 survey_adopt_final <- arrange(survey_adopt_final, survey_id)
 
-ifelse(survey_adopt_final$package_nopackage ==1, survey_adopt_final$adopt %in% c(0,1), survey_test_final$adopt == 0) ## test to see if logic is correct
+ifelse(survey_adopt_final$package_nopackage ==1, survey_adopt_final$adopt %in% c(0,1), survey_adopt_final$adopt == 0) ## test to see if logic is correct
 
 
 
@@ -226,6 +227,8 @@ str(survey_matched_levels_final)
 sum(survey_matched_levels_final$adopt == 1) #163
 sum(survey_matched_levels_final$adopt == 0) #247
 ## way more "no"'s than "yes"'s
+
+DT::datatable(survey_matched_levels_final)
 ```
 
 ```{r}
@@ -236,6 +239,101 @@ survey_logit <- glm(adopt ~ sos + info + own, family = "binomial", data = survey
 # own	1 = fishers, 2 = industry, 3 = govt, 4 = public access
 #adopt : 1 = accept, 0 = decline
 summary(survey_logit) #check the model
+```
+
+```{r}
+packages <- read_csv("packages.csv")
+```
+## Conditional Logit Model
+
+```{r}
+
+####### NOTE: THIS IS ONLY WORKING WITH THE CHOICE EXPERIMENT.... STILL NEED TO TIDY THE REST OF THE DATA #######
+
+version_to_package <- read_csv("version_to_package.csv") #read in version to package conversion
+# sos	1 = no, 2 = yes
+# info 	1 = non, 2 = anon
+# own	1 = fishers, 2 = industry, 3 = govt, 4 = public access
+
+## this is giving us tidy data for the choice experiment. If they had a choice between package one and package 2, and chose package one, and then had a choice between package one and no package, and still chose package one, we assign a "1" for adoption. Likewise for if they originally chose package 2. If they chose no package, then both packages receive a "0" for adoption. Is this what we want to do? This eliminates the "tradeoff" aspect and makes this a classical "discrete choice experiment". We can still look into a model for the "tradeoff" between two packages, but for now this will tell us a "probability of adoption" with a binomial logistic regression model. 
+
+survey <- master_surv_resp %>%
+  dplyr::select(survey_id, survey_version, choice) %>%
+  arrange(survey_id) %>%
+  mutate(index = 1:205)
+
+survey_matched <- survey %>%
+  left_join(version_to_package, by = "survey_version") %>%
+  left_join(packages, by = "package")# match to get 2 "package"'s for each respondent. This way we will have a "yes" or a "no" for each package a respondent was asked about.  
+
+survey_adopt_1_2 <- survey_matched %>%
+  mutate(adopt_one  = 
+           case_when(choice ==1 ~ 1 , 
+         choice == 2  ~ 0),
+         adopt_two = 
+         case_when(choice == 2  ~ 1,
+          choice == 1  ~ 0)) 
+
+survey_adopt_1 <- survey_adopt_1_2[seq(1, nrow(survey_adopt_1_2), 2), ] #grab every other row starting from row one. This way we get all of the corret rows for the "adopt_one" column
+
+survey_adopt_2 <- survey_adopt_1_2[seq(2, nrow(survey_adopt_1_2), 2), ] #grab every other row starting from row two. This way we get all of the corret rows for the "adopt_two" column
+
+survey_adopt_1_final <- survey_adopt_1 %>%
+  select(-10)  %>% # deselect adopt_two column
+  rename("adopt" = adopt_one) #rename adopt_one column to "adopt"
+
+survey_adopt_2_final <- survey_adopt_2 %>%
+  select(-9) %>% # deselect adopt_two column
+  rename("adopt" = adopt_two) # rename adopt_one column to "adopt"
+
+survey_adopt_final <- rbind(survey_adopt_1_final, survey_adopt_2_final)
+
+survey_adopt_final <- arrange(survey_adopt_final, survey_id) %>%
+  mutate(STR = 100*index+1)
+
+sum(survey$choice == 2) #106
+sum(survey_adopt_2$adopt_two == 1) #106
+sum(survey$choice == 1) #99
+sum(survey_adopt_1$adopt_one == 1) #99
+
+survey_matched_levels_final <- survey_adopt_final %>%
+  mutate(sos = as.factor(sos), info = as.factor(info), own = as.factor(own)) %>%
+  mutate(ASC = 1) %>%
+  rename("RES" = "adopt") %>%
+  dplyr::select(STR, RES, ASC, sos, info, own) 
+
+
+
+str(survey_matched_levels_final)
+
+DT::datatable(survey_matched_levels_final)
+```
+
+```{r}
+#conditional logit model
+library(survival)
+
+clogout1 <- clogit(RES ~ ASC + sos + info + own + strata(STR), data = survey_matched_levels_final)
+# sos	1 = no, 2 = yes
+# info 	1 = non, 2 = anon
+# own	1 = fishers, 2 = industry, 3 = govt, 4 = public access
+#adopt : 1 = accept, 0 = decline
+summary(survey_logit) #check the model
+```
+
+
+bad code: 
+```{r}
+# %>% # logic for the packages they chose. Did they adopt or not...
+  # mutate(adopt_one =
+  #          ifelse(is.na(adopt_one) == TRUE, 0, adopt_one), # catches all instances where an adopt_*** should be assigned "0"
+  #        adopt_two =
+  #          ifelse(is.na(adopt_two) == TRUE,  0, adopt_two) # catches all instances where an adopt_*** should be assigned "0" 
+  #        )
+
+ifelse(survey_adopt_final$package_nopackage ==1, survey_adopt_final$adopt %in% c(0,1), survey_adopt_final$adopt == 0) ## test to see if logic is correct
+
+
 ```
 
 
