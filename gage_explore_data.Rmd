@@ -321,19 +321,86 @@ clogout1 <- clogit(RES ~ ASC + sos + info + own + strata(STR), data = survey_mat
 summary(survey_logit) #check the model
 ```
 
-
-bad code: 
 ```{r}
-# %>% # logic for the packages they chose. Did they adopt or not...
-  # mutate(adopt_one =
-  #          ifelse(is.na(adopt_one) == TRUE, 0, adopt_one), # catches all instances where an adopt_*** should be assigned "0"
-  #        adopt_two =
-  #          ifelse(is.na(adopt_two) == TRUE,  0, adopt_two) # catches all instances where an adopt_*** should be assigned "0" 
-  #        )
+## BR work 
+master_surv_resp <- read_csv("master_survey_resp.csv")
+version_to_package <- read_csv("version_to_package.csv")
+packages <- read_csv("packages.csv")
 
-ifelse(survey_adopt_final$package_nopackage ==1, survey_adopt_final$adopt %in% c(0,1), survey_adopt_final$adopt == 0) ## test to see if logic is correct
 
+version1<-version_to_package %>% 
+  filter(package<=16) %>% 
+  left_join(packages)
+
+survey_ce1<-master_surv_resp %>% 
+  select(survey_id, survey_version, choice) %>% 
+  mutate(RES = ifelse(choice == 1, 1, 0)) %>% 
+  merge(version1, all = TRUE) %>% 
+  arrange(survey_id) %>% 
+  mutate(STR=c(1:205)) 
+
+version2<-version_to_package %>% 
+  filter(package>=17)%>% 
+  left_join(packages)
+
+survey_ce2<-master_surv_resp %>% 
+  select(survey_id, survey_version, choice) %>% 
+  mutate(RES = ifelse(choice == 2, 1, 0)) %>% 
+  merge(version2, all = TRUE)%>% 
+  arrange(survey_id) %>% 
+  mutate(STR=c(1:205)) 
+
+survey_ce_total <- rbind(survey_ce1, survey_ce2)
+
+survey_ce <- survey_ce_total %>% 
+  mutate(ASC=1) %>% 
+  select(STR,RES, ASC, 6:8) %>% 
+  mutate(STR=STR*1000+1) %>% 
+  arrange(STR) %>%
+  mutate(sos = as.factor(sos), info = as.factor(info), own = as.factor(own)) # this fixes problem i think? 
+  
+```
+
+```{r}
+library(survival)
+
+clogout1<-clogit(RES~sos+info+own+strata(STR), data=survey_ce)
+clogout1
+
+```
+```{r}
+pt2_response<-master_surv_resp %>% 
+  select(survey_id, package_nopackage)
+
+pt2_join<-survey_ce_total %>% 
+  filter(RES==1) %>% 
+  mutate(STR=STR*1000+2) %>% 
+  select(STR, sos,info,own,survey_version,package, survey_id) %>% 
+  left_join(pt2_response) %>%
+  mutate(RES=package_nopackage) %>% 
+  select(-package_nopackage)
+  
+  
+pt2_package<-pt2_join %>% 
+  mutate(ASC=1)
+  
+pt2_nopackage<-pt2_join %>% 
+  mutate(sos=0, info=0, own=0, ASC=0) %>% 
+  mutate(RES = ifelse(RES == 1, 0, 1))
+
+survey_ce_pt2_total<-rbind(pt2_package, pt2_nopackage)
+
+survey_ce_pt2<-survey_ce_pt2_total %>% 
+  select(STR,RES, ASC, sos,info,own) %>% 
+  arrange(STR) %>%
+  mutate(sos = as.factor(sos), info = as.factor(info), own = as.factor(own))
+
+ce_total<-rbind(survey_ce, survey_ce_pt2) 
 
 ```
 
+```{r}
+clogout2<-clogit(RES~ASC+sos+info+own+strata(STR), data=ce_total)
+clogout2
+```
 
