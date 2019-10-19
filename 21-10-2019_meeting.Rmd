@@ -1,0 +1,315 @@
+---
+title: '21-10-2019 Meeting'
+author: "*Compiled on `r date()` by `r Sys.info()['user']`*"
+output: 
+  html_document:
+    toc: true
+    toc_float: yes
+    number_sections: true
+    theme: cerulean
+    highlight: haddock
+    includes: 
+  pdf_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE}
+library(tidyverse)
+library(survival)
+library(AlgDesign)
+library(DT)
+library(stargazer)
+library(xtable)
+```
+
+
+```{r, include = FALSE}
+master_surv_resp <- read_csv("master_survey_resp.csv")
+version_to_package <- read_csv("version_to_package.csv")
+packages <- read_csv("packages.csv")
+
+
+version1<-version_to_package %>% 
+  filter(package<=16) %>% 
+  left_join(packages)
+
+survey_ce1<-master_surv_resp %>% 
+  select(survey_id, survey_version, choice) %>% 
+  mutate(RES = ifelse(choice == 1, 1, 0)) %>% 
+  merge(version1, all = TRUE) %>% 
+  arrange(survey_id) %>% 
+  mutate(STR=c(1:205)) 
+
+version2<-version_to_package %>% 
+  filter(package>=17)%>% 
+  left_join(packages)
+
+survey_ce2<-master_surv_resp %>% 
+  select(survey_id, survey_version, choice) %>% 
+  mutate(RES = ifelse(choice == 2, 1, 0)) %>% 
+  merge(version2, all = TRUE)%>% 
+  arrange(survey_id) %>% 
+  mutate(STR=c(1:205)) 
+
+survey_ce_total <- rbind(survey_ce1, survey_ce2)
+
+survey_ce <- survey_ce_total %>% 
+  mutate(ASC=1) %>% 
+  select(STR,RES, ASC, 6:8) %>% 
+  mutate(STR=STR*1000+1) %>% 
+  arrange(STR) %>%
+  mutate(sos = as.factor(sos), info = as.factor(info), own = as.factor(own)) # this fixes problem i think? 
+  
+```
+## Package Key
+
+Package |	Info | Own |	SOS
+-----	|----- | ----- | -----
+1 |	Non-anonymous |	Industry |	No
+2 |	Non-anonymous |	Government |	Yes
+3	 | Non-anonymous |	Fishers |	No
+4 |	Anonymous |	Public Access	| Yes
+5 |	Anonymous |	Public Access |	No
+6 |	Anonymous |	Government |	No
+7 |	Anonymous |	Fishers |	Yes
+8 |	Non-anonymous |	Public Access |	No
+9 |	Anonymous |	Government |	Yes
+10 | 	Anonymous |	Industry |	No
+11 |	Non-anonymous |	Public Access |	Yes
+12 |	Non-anonymous |	Fishers |	Yes
+13 |	Non-anonymous |	Industry |	Yes
+14 |	Anonymous |	Industry |	Yes
+15 |	Anonymous |	Fishers |	No
+16 |	Non-anonymous |	Government |	No
+
+```{r, include = FALSE}
+library(survival)
+
+clogout1<-clogit(RES~sos+info+own+strata(STR), data=survey_ce)
+clogout1
+summary(clogout1)
+
+# sos	1 = no, 2 = yes
+# info 	1 = non, 2 = anon
+# own	1 = fishers, 2 = industry, 3 = govt, 4 = public access
+#adopt : 1 = accept, 0 = decline
+```
+
+## Phase 1 model results
+```{r stargazer1, results = 'asis', include = FALSE}
+#adoption_1 <- stargazer(clogout1, title = "Phase 1 Conditional Logit Model", type = "html")
+```
+
+```{r, echo = FALSE}
+summary(clogout1)
+```
+
+```{r, include = FALSE}
+pt2_response<-master_surv_resp %>% 
+  select(survey_id, package_nopackage)
+
+pt2_join<-survey_ce_total %>% 
+  filter(RES==1) %>% 
+  mutate(STR=STR*1000+2) %>% 
+  select(STR, sos,info,own,survey_version,package, survey_id) %>% 
+  left_join(pt2_response) %>%
+  mutate(RES=package_nopackage) %>% 
+  select(-package_nopackage)
+  
+  
+pt2_package<-pt2_join %>% 
+  mutate(ASC=1)
+  
+pt2_nopackage<-pt2_join %>% 
+  mutate(sos=0, info=0, own=0, ASC=0) %>% 
+  mutate(RES = ifelse(RES == 1, 0, 1))
+
+survey_ce_pt2_total<-rbind(pt2_package, pt2_nopackage)
+
+survey_ce_pt2<-survey_ce_pt2_total %>% 
+  select(STR,RES, ASC, sos,info,own) %>% 
+  arrange(STR) %>%
+  mutate(sos = as.factor(sos), info = as.factor(info), own = as.factor(own))
+
+ce_total<-rbind(survey_ce, survey_ce_pt2) 
+
+```
+
+```{r, include = FALSE}
+clogout2<-clogit(RES~ASC+sos+info+own+strata(STR), data=ce_total)
+clogout2
+summary(clogout2)
+```
+
+## Phase 2 model results
+```{r stargazer2, results = "asis", include = FALSE}
+#adoption_2 <- stargazer(clogout2, title = "Phase 2 Conditional Logit Model", type = "html")
+```
+
+```{r, echo = FALSE}
+summary(clogout2)
+```
+
+
+```{r, include = FALSE}
+library(AlgDesign)
+ffd <- gen.factorial(c(2,2,4), varNames = c("sos", "info", "own"), factors = "all") # construct a full factorial design which has two 2 level attributes and one 4 level attribute. factors = "all" indicates that all arguments are factors
+ffd 
+
+all_packages <- ffd %>%
+  mutate(STR = 1001) #RES = rep(c(1,0),8))
+
+level_probs1 <- predict(clogout1, newdata = all_packages, type = "risk", se.fit = TRUE)
+
+graph_data1 <- data.frame(all_packages, level_probs1)  
+
+#reasoning for predicting out a clogit model:
+#https://markmail.org/search/?q=list%3Aorg.r-project.r-help+predict+clogit#query:list%3Aorg.r-project.r-help%20predict%20clogit%20from%3A%22Therneau%2C%20Terry%20M.%2C%20Ph.D.%22+page:1+mid:tsbl3cbnxywkafv6+state:results
+#https://stackoverflow.com/questions/35329585/how-to-get-fitted-values-from-clogit-model
+
+# sos	1 = no, 2 = yes
+# info 	1 = non, 2 = anon
+# own	1 = fishers, 2 = industry, 3 = govt, 4 = public access
+#adopt : 1 = accept, 0 = decline
+
+graph_data11 <- graph_data1 %>%
+  mutate(level_probs1 = fit/(fit+ 1),
+         level_se = se.fit/(se.fit + 1)) %>%
+  select(-fit, -se.fit, -STR) %>%
+  arrange(-level_probs1) %>%
+  select(info, own, sos, level_probs1, level_se) %>%
+  mutate(info = case_when(
+    info == 1 ~ "Non-anon",
+    info == 2 ~ "Anon"
+  ), 
+  own = case_when(
+   own == 1 ~ "Fishers",
+   own == 2 ~ "Industry", 
+   own == 3 ~ "Government", 
+   own == 4 ~ "Public Access"
+  ),
+  sos = case_when(
+    sos == 1 ~ "No",
+    sos == 2 ~ "Yes"
+  ))
+```
+
+## Phase 1 clogit model probability results for each package
+
+```{r, echo = FALSE}
+DT::datatable(graph_data11)
+
+```
+
+## Phase 1 conditional logit model probability of adoption exploration
+```{r, echo = FALSE}
+ggplot( data = graph_data11) +
+  #geom_line(aes(color = Sex)) +
+  geom_line(aes(x = sos, y = level_probs1)) +
+  #geom_line(aes(x = info, y = level_probs1)) +
+  #geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "SOS Capability", y = "Predicted probability of adoption", title = "Phase 1")
+
+ggplot( data = graph_data11) +
+  #geom_line(aes(color = Sex)) +
+  #geom_line(aes(x = sos, y = level_probs1)) +
+  geom_line(aes(x = info, y = level_probs1)) +
+  #geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "Information Access", y = "Predicted probability of adoption", title = "Phase 1")
+
+ggplot( data = graph_data11) +
+  #geom_line(aes(color = Sex)) +
+  #geom_line(aes(x = sos, y = level_probs1)) +
+  #geom_line(aes(x = info, y = level_probs1)) +
+  geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "Ownership of data", y = "Predicted probability of adoption", title = "Phase 1")
+
+```
+
+
+```{r, include = FALSE}
+ffd <- gen.factorial(c(2,2,4), varNames = c("sos", "info", "own"), factors = "all") # construct a full factorial design which has two 2 level attributes and one 4 level attribute. factors = "all" indicates that all arguments are factors
+ffd 
+
+all_packages <- ffd %>%
+  mutate(STR = 1001, ASC = 1) #RES = rep(c(1,0),8))
+
+level_probs2 <- predict(clogout2, newdata = all_packages, type = "risk", se.fit = TRUE)
+
+graph_data2 <- data.frame(all_packages, level_probs2)  
+
+#reasoning for predicting out a clogit model:
+#https://markmail.org/search/?q=list%3Aorg.r-project.r-help+predict+clogit#query:list%3Aorg.r-project.r-help%20predict%20clogit%20from%3A%22Therneau%2C%20Terry%20M.%2C%20Ph.D.%22+page:1+mid:tsbl3cbnxywkafv6+state:results
+#https://stackoverflow.com/questions/35329585/how-to-get-fitted-values-from-clogit-model
+
+graph_data22 <- graph_data2 %>%
+  mutate(level_probs2 = fit/(fit+ 1),
+         level_se = se.fit/(se.fit + 1)) %>%
+  select(-fit, -se.fit, -STR) %>%
+  arrange(-level_probs2) %>%
+  mutate(info = case_when(
+    info == 1 ~ "Non-anon",
+    info == 2 ~ "Anon"
+  ), 
+  own = case_when(
+   own == 1 ~ "Fishers",
+   own == 2 ~ "Industry", 
+   own == 3 ~ "Government", 
+   own == 4 ~ "Public Access"
+  ),
+  sos = case_when(
+    sos == 1 ~ "No",
+    sos == 2 ~ "Yes"
+  ))
+```
+
+## Phase 2 clogit model probability results for each package
+```{r, echo = FALSE}
+DT::datatable(graph_data22)
+```
+
+## Phase 2 conditional logit model probability of adoption exploration
+```{r, echo = FALSE}
+ggplot( data = graph_data22) +
+  #geom_line(aes(color = Sex)) +
+  geom_line(aes(x = sos, y = level_probs2)) +
+  #geom_line(aes(x = info, y = level_probs1)) +
+  #geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "SOS Capability", y = "Predicted probability of adoption", title = "Phase 2")
+
+ggplot( data = graph_data22) +
+  #geom_line(aes(color = Sex)) +
+  #geom_line(aes(x = sos, y = level_probs1)) +
+  geom_line(aes(x = info, y = level_probs2)) +
+  #geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "Information Access", y = "Predicted probability of adoption", title = "Phase 2")
+
+ggplot( data = graph_data22) +
+  #geom_line(aes(color = Sex)) +
+  #geom_line(aes(x = sos, y = level_probs1)) +
+  #geom_line(aes(x = info, y = level_probs1)) +
+  geom_line(aes(x = own, y = level_probs2)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "Ownership of data", y = "Predicted probability of adoption", title = "Phase 2")
+```

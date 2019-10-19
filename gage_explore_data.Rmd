@@ -366,6 +366,16 @@ library(survival)
 
 clogout1<-clogit(RES~sos+info+own+strata(STR), data=survey_ce)
 clogout1
+summary(clogout1)
+
+# sos	1 = no, 2 = yes
+# info 	1 = non, 2 = anon
+# own	1 = fishers, 2 = industry, 3 = govt, 4 = public access
+#adopt : 1 = accept, 0 = decline
+
+library(stargazer)
+
+
 
 ```
 ```{r}
@@ -402,5 +412,65 @@ ce_total<-rbind(survey_ce, survey_ce_pt2)
 ```{r}
 clogout2<-clogit(RES~ASC+sos+info+own+strata(STR), data=ce_total)
 clogout2
+summary(clogout2)
 ```
+
+Predict out from phase one the probability of adoption for all attribute levels 
+
+
+```{r}
+library(AlgDesign)
+ffd <- gen.factorial(c(2,2,4), varNames = c("sos", "info", "own"), factors = "all") # construct a full factorial design which has two 2 level attributes and one 4 level attribute. factors = "all" indicates that all arguments are factors
+ffd 
+
+all_packages <- ffd %>%
+  mutate(STR = 1001) #RES = rep(c(1,0),8))
+
+level_probs1 <- predict(clogout1, newdata = all_packages, type = "risk", se.fit = TRUE)
+
+graph_data1 <- data.frame(all_packages, level_probs1)  
+
+#reasoning for predicting out a clogit model:
+#https://markmail.org/search/?q=list%3Aorg.r-project.r-help+predict+clogit#query:list%3Aorg.r-project.r-help%20predict%20clogit%20from%3A%22Therneau%2C%20Terry%20M.%2C%20Ph.D.%22+page:1+mid:tsbl3cbnxywkafv6+state:results
+#https://stackoverflow.com/questions/35329585/how-to-get-fitted-values-from-clogit-model
+
+graph_data11 <- graph_data1 %>%
+  mutate(level_probs1 = fit/(fit+ 1),
+         level_se = se.fit/(se.fit + 1)) %>%
+  select(-fit, -se.fit, -STR)
+```
+
+```{r}
+ggplot( data = graph_data11) +
+  #geom_line(aes(color = Sex)) +
+  geom_line(aes(x = sos, y = level_probs1)) +
+  #geom_line(aes(x = info, y = level_probs1)) +
+  #geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "SOS Capability", y = "Predicted probability of adoption")
+
+ggplot( data = graph_data11) +
+  #geom_line(aes(color = Sex)) +
+  #geom_line(aes(x = sos, y = level_probs1)) +
+  geom_line(aes(x = info, y = level_probs1)) +
+  #geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "Information Access", y = "Predicted probability of adoption")
+
+ggplot( data = graph_data11) +
+  #geom_line(aes(color = Sex)) +
+  #geom_line(aes(x = sos, y = level_probs1)) +
+  #geom_line(aes(x = info, y = level_probs1)) +
+  geom_line(aes(x = own, y = level_probs1)) +
+  #geom_ribbon(aes(ymin = level_probs1 - level_se, ymax = level_probs1 + level_se, fill = info), alpha = 0.3) +
+  theme_bw() +
+  scale_x_discrete(expand = c(0,1)) +
+  labs(x = "Ownership of data", y = "Predicted probability of adoption")
+```
+
+
 
