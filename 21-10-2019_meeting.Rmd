@@ -381,14 +381,17 @@ wtp_wtr_2 <- wtp_wtr %>%
   select(-survey_version)
 
 wtp_wtr_final <- full_join(wtp_wtr_1, wtp_wtr_2)
+
+wtp_wtr_final_1 <- wtp_wtr_final %>%
+  mutate(money = ifelse(is.na(wtp), wtr, wtp)) %>%
+  select(-wtr, -wtp)
 ```
 
 ```{r, warning = FALSE}
-ggplot(data = wtp_wtr_final) +
-  geom_jitter(aes(x = as.factor(package), y = wtp)) +
-  geom_jitter(aes(x = as.factor(package), y = wtr)) +
+ggplot(data = wtp_wtr_final_1, aes(x = as.factor(package), y = money)) +
+  geom_jitter() +
   theme_bw() +
-  facet_wrap(~country)
+  facet_wrap(~country) 
 ```
 
 
