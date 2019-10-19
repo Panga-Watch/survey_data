@@ -161,7 +161,7 @@ ffd <- gen.factorial(c(2,2,4), varNames = c("sos", "info", "own"), factors = "al
 ffd 
 
 all_packages <- ffd %>%
-  mutate(STR = 1001) #RES = rep(c(1,0),8))
+  mutate(STR = 1001, package = 1:16) #RES = rep(c(1,0),8))
 
 level_probs1 <- predict(clogout1, newdata = all_packages, type = "risk", se.fit = TRUE)
 
@@ -181,7 +181,7 @@ graph_data11 <- graph_data1 %>%
          level_se = se.fit/(se.fit + 1)) %>%
   select(-fit, -se.fit, -STR) %>%
   arrange(-level_probs1) %>%
-  select(info, own, sos, level_probs1, level_se) %>%
+  select(package, info, own, sos, level_probs1, level_se) %>%
   mutate(info = case_when(
     info == 1 ~ "Non-anon",
     info == 2 ~ "Anon"
@@ -245,7 +245,7 @@ ffd <- gen.factorial(c(2,2,4), varNames = c("sos", "info", "own"), factors = "al
 ffd 
 
 all_packages <- ffd %>%
-  mutate(STR = 1001, ASC = 1) #RES = rep(c(1,0),8))
+  mutate(STR = 1001, ASC = 1, package = 1:16) #RES = rep(c(1,0),8))
 
 level_probs2 <- predict(clogout2, newdata = all_packages, type = "risk", se.fit = TRUE)
 
@@ -259,7 +259,8 @@ graph_data22 <- graph_data2 %>%
   mutate(level_probs2 = fit/(fit+ 1),
          level_se = se.fit/(se.fit + 1)) %>%
   select(-fit, -se.fit, -STR) %>%
-  arrange(-level_probs2) %>%
+  select(package, sos, info, own, level_probs2, level_se) %>%
+  arrange(desc(level_probs2)) %>%
   mutate(info = case_when(
     info == 1 ~ "Non-anon",
     info == 2 ~ "Anon"
@@ -273,7 +274,7 @@ graph_data22 <- graph_data2 %>%
   sos = case_when(
     sos == 1 ~ "No",
     sos == 2 ~ "Yes"
-  ))
+  )) 
 ```
 
 ## Phase 2 clogit model probability results for each package
@@ -313,3 +314,82 @@ ggplot( data = graph_data22) +
   scale_x_discrete(expand = c(0,1)) +
   labs(x = "Ownership of data", y = "Predicted probability of adoption", title = "Phase 2")
 ```
+
+## Willingness to Pay/Recieve
+```{r, include = FALSE}
+master_surv_resp <- read_csv("master_survey_resp.csv")
+version_to_package <- read_csv("version_to_package.csv")
+packages <- read_csv("packages.csv")
+```
+
+```{r, include = FALSE}
+pt2_response<-master_surv_resp %>% 
+  select(survey_id, country, package_nopackage,  wtp_1, wtp_2, wtp_3, wtp_4, wtr_1, wtr_2, wtr_3, wtr_4)
+
+pt2_join_wtp <-survey_ce_total %>% 
+  filter(RES==1) %>% 
+  mutate(STR=STR*1000+2) %>% 
+  select(survey_id, package, sos,info,own) %>% 
+  left_join(pt2_response) %>%
+  mutate(RES=package_nopackage) %>% 
+  filter(RES == 1) %>%
+  select(-RES, -package_nopackage, -wtr_1, -wtr_2, -wtr_3, -wtr_4) %>%
+  mutate(wtp_1 = ifelse(!is.na(wtp_1), 5, NA),
+        wtp_2 = ifelse(!is.na(wtp_2), 10, NA),
+        wtp_3 = ifelse(!is.na(wtp_3), 15, NA), 
+        wtp_4 = ifelse(!is.na(wtp_4), 20, NA)) %>%
+  mutate(wtp = case_when(
+    !is.na(wtp_4) ~ wtp_4,
+    is.na(wtp_4) & !is.na(wtp_3) ~ wtp_3, 
+    is.na(wtp_4) & is.na(wtp_3) & !is.na(wtp_2) ~ wtp_2,
+    is.na(wtp_4) & is.na(wtp_3) & is.na(wtp_2) & !is.na(wtp_1) ~ wtp_1)
+    ) %>%
+  select(survey_id, country, package, wtp)
+
+  
+
+pt2_join_wtr <-survey_ce_total %>% 
+  filter(RES==1) %>% 
+  mutate(STR=STR*1000+2) %>% 
+  select(survey_id, package, sos,info,own) %>% 
+  left_join(pt2_response) %>%
+  mutate(RES=package_nopackage) %>% 
+  filter(RES == 0) %>%
+  select(-RES, -package_nopackage, -wtp_4, -7, -8, -9) %>%
+  mutate(wtr_1 = ifelse(!is.na(wtr_1), 5, NA),
+        wtr_2 = ifelse(!is.na(wtr_2), 10, NA),
+        wtr_3 = ifelse(!is.na(wtr_3), 15, NA), 
+        wtr_4 = ifelse(!is.na(wtr_4), 20, NA)) %>%
+  mutate(wtr = case_when(
+    !is.na(wtr_4) ~ wtr_4,
+    is.na(wtr_4) & !is.na(wtr_3) ~ wtr_3, 
+    is.na(wtr_4) & is.na(wtr_3) & !is.na(wtr_2) ~ wtr_2,
+    is.na(wtr_4) & is.na(wtr_3) & is.na(wtr_2) & !is.na(wtr_1) ~ wtr_1)
+    ) %>%
+  select(survey_id, country, package, wtr)
+  
+wtp_wtr <- full_join(pt2_join_wtp, pt2_join_wtr) %>%
+  mutate(wtr = wtr*-1) 
+
+wtp_wtr_1 <- wtp_wtr %>%
+  filter(package < 17)
+
+wtp_wtr_2 <- wtp_wtr %>%
+  filter(package>16) %>%
+  left_join(version_to_package) %>%
+  mutate(package =  survey_version) %>%
+  select(-survey_version)
+
+wtp_wtr_final <- full_join(wtp_wtr_1, wtp_wtr_2)
+```
+
+```{r, warning = FALSE}
+ggplot(data = wtp_wtr_final) +
+  geom_jitter(aes(x = as.factor(package), y = wtp)) +
+  geom_jitter(aes(x = as.factor(package), y = wtr)) +
+  theme_bw() +
+  facet_wrap(~country)
+```
+
+
+
