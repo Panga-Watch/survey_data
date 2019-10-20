@@ -361,7 +361,7 @@ pt2_join_wtp <-survey_ce_total %>%
     is.na(wtp_4) & is.na(wtp_3) & !is.na(wtp_2) ~ wtp_2,
     is.na(wtp_4) & is.na(wtp_3) & is.na(wtp_2) & !is.na(wtp_1) ~ wtp_1)
     ) %>%
-  select(survey_id, country, package, wtp)
+  select(survey_id, country, package, wtp, sos, info, own)
 
   
 
@@ -383,19 +383,29 @@ pt2_join_wtr <-survey_ce_total %>%
     is.na(wtr_4) & is.na(wtr_3) & !is.na(wtr_2) ~ wtr_2,
     is.na(wtr_4) & is.na(wtr_3) & is.na(wtr_2) & !is.na(wtr_1) ~ wtr_1)
     ) %>%
-  select(survey_id, country, package, wtr)
+  select(survey_id, country, package, wtr, sos, info, own)
   
 wtp_wtr <- full_join(pt2_join_wtp, pt2_join_wtr) %>%
   mutate(wtr = wtr*-1) 
+
+packages_1 <- packages %>%
+  filter(package <= 16)
+packages_2 <- packages %>%
+  filter(package >16)
+
+packages_join <- inner_join(packages_1, packages_2, by = c("info", "sos", "own"))
 
 wtp_wtr_1 <- wtp_wtr %>%
   filter(package < 17)
 
 wtp_wtr_2 <- wtp_wtr %>%
-  filter(package>16) %>%
-  left_join(version_to_package) %>%
-  mutate(package =  survey_version) %>%
-  select(-survey_version)
+  filter(package>16)  %>%
+  left_join(packages_join, by = c("package" = "package.y", "info", "sos", "own")) %>%
+  select(-package) %>%
+  rename("package" = "package.x")
+  #mutate(package_new =  survey_version) %>%
+  #select(-survey_version)
+
 
 wtp_wtr_final <- full_join(wtp_wtr_1, wtp_wtr_2)
 
