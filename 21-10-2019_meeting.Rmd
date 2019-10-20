@@ -24,8 +24,16 @@ library(AlgDesign)
 library(DT)
 library(stargazer)
 library(xtable)
+library(here)
 ```
 
+```{r, echo=FALSE}
+# htmltools::img(src = knitr::image_uri(file.path(here(), "panga.png")),
+#                alt = 'logo',
+#                style = 'position:absolute; top:0; right:0; padding:10px;')
+
+
+```
 
 ```{r, include = FALSE}
 master_surv_resp <- read_csv("master_survey_resp.csv")
@@ -65,27 +73,15 @@ survey_ce <- survey_ce_total %>%
   mutate(sos = as.factor(sos), info = as.factor(info), own = as.factor(own)) # this fixes problem i think? 
   
 ```
-## Package Key
 
-Package |	Info | Own |	SOS
+## Key
+
+Level |	Info | Own |	SOS
 -----	|----- | ----- | -----
-1 |	Non-anonymous |	Industry |	No
-2 |	Non-anonymous |	Government |	Yes
-3	 | Non-anonymous |	Fishers |	No
-4 |	Anonymous |	Public Access	| Yes
-5 |	Anonymous |	Public Access |	No
-6 |	Anonymous |	Government |	No
-7 |	Anonymous |	Fishers |	Yes
-8 |	Non-anonymous |	Public Access |	No
-9 |	Anonymous |	Government |	Yes
-10 | 	Anonymous |	Industry |	No
-11 |	Non-anonymous |	Public Access |	Yes
-12 |	Non-anonymous |	Fishers |	Yes
-13 |	Non-anonymous |	Industry |	Yes
-14 |	Anonymous |	Industry |	Yes
-15 |	Anonymous |	Fishers |	No
-16 |	Non-anonymous |	Government |	No
-
+1     | non | Fisher | No
+2     | anon | Industry | Yes
+3     | -    | Government | - 
+4     | -    | Public Access | -  
 ```{r, include = FALSE}
 library(survival)
 
@@ -197,6 +193,27 @@ graph_data11 <- graph_data1 %>%
     sos == 2 ~ "Yes"
   ))
 ```
+
+## Package Key
+
+Package |	Info | Own |	SOS
+-----	|----- | ----- | -----
+1 |	Non-anonymous |	Industry |	No
+2 |	Non-anonymous |	Government |	Yes
+3	 | Non-anonymous |	Fishers |	No
+4 |	Anonymous |	Public Access	| Yes
+5 |	Anonymous |	Public Access |	No
+6 |	Anonymous |	Government |	No
+7 |	Anonymous |	Fishers |	Yes
+8 |	Non-anonymous |	Public Access |	No
+9 |	Anonymous |	Government |	Yes
+10 | 	Anonymous |	Industry |	No
+11 |	Non-anonymous |	Public Access |	Yes
+12 |	Non-anonymous |	Fishers |	Yes
+13 |	Non-anonymous |	Industry |	Yes
+14 |	Anonymous |	Industry |	Yes
+15 |	Anonymous |	Fishers |	No
+16 |	Non-anonymous |	Government |	No
 
 ## Phase 1 clogit model probability results for each package
 
@@ -388,10 +405,25 @@ wtp_wtr_final_1 <- wtp_wtr_final %>%
 ```
 
 ```{r, warning = FALSE}
-ggplot(data = wtp_wtr_final_1, aes(x = as.factor(package), y = money)) +
-  geom_jitter() +
+wtp_wtr_final_1_sum <-
+ as.data.frame(table(package = wtp_wtr_final_1$package,country = wtp_wtr_final_1$country, money = wtp_wtr_final_1$money)) 
+
+wtp_wtr_final_1_sum <- wtp_wtr_final_1_sum %>%
+  mutate(money = as.integer(as.character(money)))
+
+#sum(wtp_wtr_final_1_sum$Freq) 204... correct
+
+ggplot(data = wtp_wtr_final_1_sum, aes(x = as.factor(package), y = money)) +
+geom_tile(aes(fill = Freq),
+     colour = "white") + scale_fill_gradient(low = "white",
+    high = "steelblue") +
+   #geom_point(aes(size = Freq)) +
   theme_bw() +
-  facet_wrap(~country) 
+  facet_wrap(~country) +
+  labs(y = "Willingness To Recieve             Willingness To Pay", x = "Package", fill = "Count") +
+  geom_hline(yintercept = 0, color = "grey") +
+  scale_y_continuous(breaks=c(-20, -15, -10, -5 ,5,10, 15, 20))
+
 ```
 
 
