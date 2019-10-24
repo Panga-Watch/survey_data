@@ -134,7 +134,7 @@ ce_total<-rbind(survey_ce, survey_ce_pt2)
 ```
 
 ```{r}
-clogout2<-clogit(RES~ASC+sos+info+own+strata(STR), data=ce_total)
+clogout2<-nlogit(RES~ASC+sos+info+own+strata(STR), data=ce_total)
 clogout2$loglik
 clogout2
 
