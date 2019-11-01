@@ -11,13 +11,20 @@ library(dplyr)
 
 Reading in the survey, filtering only for Mexico
 ```{r, include=FALSE}
-master_surv_resp <- read_csv("master_survey_resp.csv")
+master_survey_resp <- read_csv("master_survey_resp.csv")
 ```
 
 ```{r}
 colnames(master_surv_resp)
 surv_mx<- master_surv_resp %>% 
   filter(country=="MEX")
+surv_ind<- master_surv_resp %>% 
+  filter(country=="IND")
+```
+
+```{r}
+summary(surv_mx$income)
+summary(surv_ind$income)
 ```
 
 Investigating target species distribution by community
@@ -134,7 +141,7 @@ ce_total<-rbind(survey_ce, survey_ce_pt2)
 ```
 
 ```{r}
-clogout2<-nlogit(RES~ASC+sos+info+own+strata(STR), data=ce_total)
+clogout2<-clogit(RES~ASC+sos+info+own+strata(STR), data=ce_total)
 clogout2$loglik
 clogout2
 
@@ -259,3 +266,27 @@ ggplot(package_df, aes(x=survey_version, y=amount)) +
   theme_classic()
 #Plot shows that most fishers had similar choices for each survey version. For example, ALL fishers that took survey version1 chose package 2 
 ```
+
+```{r}
+bidding_opinion<-master_survey_resp %>% 
+  select(survey_id, country, survey_version, package_nopackage, choice, wtp_1, wtp_2, wtp_3, wtp_4, wtr_1, wtr_2, wtr_3, wtr_4, starts_with("trust")) %>%
+  mutate(wtp = ifelse(wtp_1 == "n", 0,
+                         ifelse(wtp_2=="n", 5,
+                                ifelse(wtp_3=="n", 10,
+                                       ifelse(wtp_4 =="n", 15,
+                                              ifelse(wtp_4 =="y", 20, 20)))))) %>% 
+  #I messed up and there is one that is yes instead of y   
+  mutate(wtr= ifelse(wtr_1=="y", -5,
+                        ifelse(wtr_2=="y", -10,
+                               ifelse(wtr_3=="y", -15,
+                                      ifelse(wtr_4=="y", -20,
+                                             ifelse(wtr_4=="n",-25)))))) %>% 
+  mutate(amount=ifelse(is.na(wtp),wtr,wtp))
+```
+
+```{r}
+ggplot(bidding_opinion)+
+  geom_jitter(aes(x=amount, y=trust_j))+
+  facet_wrap(~country)
+```
+
