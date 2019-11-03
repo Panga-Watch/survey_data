@@ -6,12 +6,19 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(dplyr)
+library(survival)
+library(AlgDesign)
+library(DT)
+library(stargazer)
+library(xtable)
+library(here)
+library(kableExtra)
 ```
+
 
 Reading in the survey, filtering only for Mexico
 ```{r, include=FALSE}
-master_survey_resp <- read_csv("master_survey_resp.csv")
+master_survey_resp <- read_csv ("master_survey_resp.csv")
 ```
 
 ```{r}
@@ -20,11 +27,6 @@ surv_mx<- master_surv_resp %>%
   filter(country=="MEX")
 surv_ind<- master_surv_resp %>% 
   filter(country=="IND")
-```
-
-```{r}
-summary(surv_mx$income)
-summary(surv_ind$income)
 ```
 
 Investigating target species distribution by community
@@ -288,5 +290,53 @@ bidding_opinion<-master_survey_resp %>%
 ggplot(bidding_opinion)+
   geom_jitter(aes(x=amount, y=trust_j))+
   facet_wrap(~country)
+```
+
+#Subset with ID, Forced/Unforced, BG$
+```{r}
+bg_comb<-master_survey_resp %>% 
+  select(survey_id, country, survey_version, package_nopackage, choice, wtp_1, wtp_2, wtp_3, wtp_4, wtr_1, wtr_2, wtr_3, wtr_4) %>%
+  mutate(wtp = ifelse(wtp_1 == "n", 0,
+                         ifelse(wtp_2=="n", 5,
+                                ifelse(wtp_3=="n", 10,
+                                       ifelse(wtp_4 =="n", 15,
+                                              ifelse(wtp_4 =="y", 20, 20)))))) %>% 
+  #I messed up and there is one that is yes instead of y   
+  mutate(wtr= ifelse(wtr_1=="y", -5,
+                        ifelse(wtr_2=="y", -10,
+                               ifelse(wtr_3=="y", -15,
+                                      ifelse(wtr_4=="y", -20,
+                                             ifelse(wtr_4=="n","Protest")))))) %>% 
+  mutate(amount=ifelse(is.na(wtp),wtr,wtp)) %>% 
+  mutate(ce_decision = ifelse(package_nopackage == 1, "unforced", "forced")) %>% 
+  mutate(alt = ifelse(choice==1, 2, 1)) %>% 
+  select(survey_id, country, survey_version, choice, alt, ce_decision, amount) 
+  
+
+pack_choice<-packages_comp %>% 
+  select(-sos, -info, -own, -package_num) 
+
+pack_alt<-pack_choice %>% 
+  mutate(alt=choice) %>% 
+  select(-choice)
+
+bg_comb_pack <- left_join(bg_comb, pack_choice, by = c("survey_version", "choice"))
+bg_package<-left_join(bg_comb_pack, pack_alt, by=c("survey_version", "alt"))
+
+wtp_df<-bg_package %>% 
+  mutate(choice=package.x, alt=package.y) %>% 
+  select(-package.x, -package.y) 
+  
+  
+amount<-wtp_df %>% 
+  group_by(ce_decision) %>% 
+  count(amount)
+```
+
+#Exploring Protest
+```{r}
+protest<-wtp_df %>% 
+  filter(amount=="Protest")
+
 ```
 
