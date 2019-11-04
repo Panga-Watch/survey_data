@@ -16,8 +16,75 @@ master_survey_resp <- read_csv ("master_survey_resp.csv")
 ```
 
 
-#Exploring Protest
+#Read in protest data
 ```{r}
 protest<-master_survey_resp %>% 
   filter(package_nopackage==0 & wtr_4=="n")
 ```
+
+#Explore data
+```{r}
+
+# Mean trust in different groups for all protestors
+protest_summ_all <- protest %>%
+  summarize(
+    mean_a = round(mean(trust_a), digits = 2),
+    sd_a = round(sd(trust_a), digits = 2),
+    mean_b = round(mean(trust_b), digits = 2),
+    sd_b = round(sd(trust_b), digits = 2),
+    mean_c = round(mean(trust_c), digits = 2),
+    sd_c = round(sd(trust_c), digits = 2),
+    mean_d = round(mean(trust_d), digits = 2),
+    sd_d = round(sd(trust_d), digits = 2),
+    mean_e = round(mean(trust_e), digits = 2),
+    sd_e = round(sd(trust_e), digits = 2),
+    mean_f = round(mean(trust_f), digits = 2),
+    sd_f = round(sd(trust_f), digits = 2),
+    mean_g = round(mean(trust_g), digits = 2),
+    sd_g = round(sd(trust_g), digits = 2),
+    mean_h = round(mean(trust_h), digits = 2),
+    sd_h = round(sd(trust_h), digits = 2),
+    mean_i = round(mean(trust_i), digits = 2),
+    sd_i = round(sd(trust_i), digits = 2),
+    mean_j = round(mean(trust_j), digits = 2),
+    sd_j = round(sd(trust_j), digits = 2),
+    mean_k = round(mean(trust_k), digits = 2),
+    sd_k = round(sd(trust_k), digits = 2),
+    mean_l = round(mean(trust_l), digits = 2),
+    sd_l = round(sd(trust_l), digits = 2)
+  )
+
+
+# Mean trust in different groups separated into fishing access type
+protest_summ_access <- protest %>%
+  group_by(access_target_species) %>% # Create subset of data grouped by access, following operations will be performed by group
+  summarize(
+    mean_a = round(mean(trust_a), digits = 2),
+    sd_a = round(sd(trust_a), digits = 2),
+    mean_b = round(mean(trust_b), digits = 2),
+    sd_b = round(sd(trust_b), digits = 2),
+    mean_c = round(mean(trust_c), digits = 2),
+    sd_c = round(sd(trust_c), digits = 2),
+    mean_d = round(mean(trust_d), digits = 2),
+    sd_d = round(sd(trust_d), digits = 2),
+    mean_e = round(mean(trust_e), digits = 2),
+    sd_e = round(sd(trust_e), digits = 2),
+    mean_f = round(mean(trust_f), digits = 2),
+    sd_f = round(sd(trust_f), digits = 2),
+    mean_g = round(mean(trust_g), digits = 2),
+    sd_g = round(sd(trust_g), digits = 2),
+    mean_h = round(mean(trust_h), digits = 2),
+    sd_h = round(sd(trust_h), digits = 2),
+    mean_i = round(mean(trust_i), digits = 2),
+    sd_i = round(sd(trust_i), digits = 2),
+    mean_j = round(mean(trust_j), digits = 2),
+    sd_j = round(sd(trust_j), digits = 2),
+    mean_k = round(mean(trust_k), digits = 2),
+    sd_k = round(sd(trust_k), digits = 2),
+    mean_l = round(mean(trust_l), digits = 2),
+    sd_l = round(sd(trust_l), digits = 2)
+  ) # Find mean trust and sd for each group listed in survey question 37 grouped by access type
+# Does it make sense to compare these means to means of non-protestors? Do some kinda t-test to see if the difference in means could be a reason why they protest?
+
+```
+
