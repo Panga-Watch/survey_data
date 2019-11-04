@@ -335,8 +335,8 @@ amount<-wtp_df %>%
 
 #Exploring Protest
 ```{r}
-protest<-wtp_df %>% 
-  filter(amount=="Protest")
+protest<-master_survey_resp %>% 
+  filter(package_nopackage==0 & wtr_4=="no")
 
 ```
 

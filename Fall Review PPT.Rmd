@@ -69,5 +69,25 @@ amount<-wtp_df %>%
   group_by(ce_decision) %>% 
   count(amount)
   
-kable(amount)
+kable(amount) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
+
+#Survey Summary
+```{r}
+#Convert currency to USD 
+
+#Indonesia 1 INR = $0.000071USD
+#Mexico 1 MXN = $0.052 USD
+income<-master_survey_resp %>% 
+  mutate(income_usd = ifelse(country == "IND", income*0.00007, income*0.052)) %>% #how do I round this.... 
+  group_by(community)
+
+ggplot(income, aes(x=community, y=income_usd, color=country))+
+  geom_jitter()
+```
+
+```{r}
+str(master_survey_resp)
+```
+

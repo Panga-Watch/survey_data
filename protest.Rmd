@@ -1,0 +1,23 @@
+---
+title: "Protest"
+author: "BR"
+date: "04/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+master_survey_resp <- read_csv ("master_survey_resp.csv")
+```
+
+
+#Exploring Protest
+```{r}
+protest<-master_survey_resp %>% 
+  filter(package_nopackage==0 & wtr_4=="n")
+```
