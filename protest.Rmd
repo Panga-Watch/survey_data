@@ -11,18 +11,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
+
 library(tidyverse)
+library(kableExtra)
+
 master_survey_resp <- read_csv ("master_survey_resp.csv")
+
 ```
 
 
 #Read in protest data
 ```{r}
+
 protest<-master_survey_resp %>% 
   filter(package_nopackage==0 & wtr_4=="n")
+
 ```
 
-#Explore data
+#Explore data for trust
 ```{r}
 
 # Mean trust in different groups for all protestors
@@ -53,6 +59,14 @@ protest_summ_all <- protest %>%
     mean_l = round(mean(trust_l), digits = 2),
     sd_l = round(sd(trust_l), digits = 2)
   )
+
+
+# Table for above data
+protest_all_table <- kable(t(protest_summ_all)) %>%  # Make a table of protest_summ_all data frame, t transposes table
+  kable_styling(full_width = F, position = "center")  # Decrease table width and centers it
+
+protest_all_table
+
 
 
 # Mean trust in different groups separated into fishing access type
@@ -86,5 +100,41 @@ protest_summ_access <- protest %>%
   ) # Find mean trust and sd for each group listed in survey question 37 grouped by access type
 # Does it make sense to compare these means to means of non-protestors? Do some kinda t-test to see if the difference in means could be a reason why they protest?
 
+# Table for above data
+protest_access_table <- kable(protest_summ_access, col.names = c("Access","Other Community Members","sd","Other Communities","sd", "Fishing Association Leaders", "sd", "Fisheries Officers", "sd", "Enforcement","sd", "Consultants", "sd", "Fishery Scientists", "sd", "Local Conservation Groups", "sd", "NGO" ,"sd", "National Govenrment","sd","Local Government","sd", "Private Company","sd")) %>%
+  kable_styling(full_width = F, position = "center")  # Decrease table width and centers it
+
+protest_access_table
+
 ```
+
+#Explore data for tech use 
+```{r}
+
+# General Tech
+sum(protest$tech_smartphone, na.rm = TRUE) #19
+sum(protest$tech_maps, na.rm = TRUE) #5
+sum(protest$tech_socialmedia, na.rm = TRUE) #7
+sum(protest$tech_other, na.rm = TRUE) #1
+sum(protest$tech_no_tech, na.rm = TRUE) #1
+
+# Fishing Tech
+sum(protest$fishtech_vhf, na.rm = TRUE) #4
+sum(protest$fishtech_fishfinder, na.rm = TRUE) #3
+#survcam doesnt work, but it is 0
+sum(protest$fishtech_catchapp, na.rm = TRUE) #0
+sum(protest$fishtech_vesseltrack, na.rm = TRUE) #4
+sum(protest$fishtech_gps, na.rm = TRUE) #6
+sum(protest$fishtech_other, na.rm = TRUE) #5
+sum(protest$fishtech_none, na.rm = TRUE) #16
+
+
+```
+
+
+
+
+
+
+
 
