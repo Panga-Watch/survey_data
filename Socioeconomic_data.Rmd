@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 
 library(tidyverse)
+library(kableExtra)
 
 ```
 
@@ -39,6 +40,15 @@ socioeconomic_summ <- socioeconomic_data %>%
 
 socioeconomic_summ
 
+# Table for above data
+
+socioeconomic_summ_table <- kable(socioeconomic_summ) %>%  # Make a table of socioeconomic_summ data frame
+  kable_styling(full_width = F, position = "center")  # Decrease table width and centers it
+
+socioeconomic_summ_table
+
+
+
 # Average % of income coming from fishing
 
 fishing_income_summ <- socioeconomic_data %>%
@@ -52,6 +62,13 @@ fishing_income_summ <- socioeconomic_data %>%
   )
 
 fishing_income_summ
+
+# Table for above data
+
+fishing_income_summ_table <- kable(fishing_income_summ) %>%  # Make a table of fishing_income_summ data frame
+  kable_styling(full_width = F, position = "center")  # Decrease table width and centers it
+
+fishing_income_summ_table
 
 ```
 
