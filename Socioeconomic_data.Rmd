@@ -1,0 +1,30 @@
+---
+title: "Socioeconomic data"
+author: "Corinna Hong"
+date: "November 22, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(tidyverse)
+
+```
+
+
+```{r}
+
+master_data <- read_csv("master_survey_resp.csv")
+
+```
+
+```{r}
+
+
+
+```
+
