@@ -22,9 +22,36 @@ master_data <- read_csv("master_survey_resp.csv")
 
 ```
 
-```{r}
+```{r, mean and median of income in MEX and IND}
 
+socioeconomic_data <- select(master_data, country, income, income_fishing) # New df only contains select columns from master df.
 
+# Mean and median income 
+socioeconomic_summ <- socioeconomic_data %>%
+  filter(income != "N/A") %>%
+  group_by(country) %>% # Create subset of data grouped by island, following operations will be performed by group
+  summarize(
+    mean = round(mean(income), digits = 2),
+    sd = round(sd(income), digits = 2),
+    median = round(median(income), digits = 2),
+    n = length(country)
+  )
+
+socioeconomic_summ
+
+# Average % of income coming from fishing
+
+fishing_income_summ <- socioeconomic_data %>%
+  filter(income_fishing != "N/A") %>%
+  group_by(country) %>% # Create subset of data grouped by island, following operations will be performed by group
+  summarize(
+    mean = round(mean(income_fishing), digits = 2),
+    sd = round(sd(income_fishing), digits = 2),
+    median = round(median(income_fishing), digits = 2),
+    n = length(country)
+  )
+
+fishing_income_summ
 
 ```
 
