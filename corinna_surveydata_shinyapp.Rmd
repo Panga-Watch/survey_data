@@ -42,3 +42,11 @@ shiny_app_data <- read_csv("master_survey_resp.csv") %>%
 
 ```
 
+```{r}
+
+# write wrangled df to .csv file
+
+# decimal point = "." and value separators = comma (",")
+write.csv(shiny_app_data, file = "shiny_app_data.csv", na = "") # keeps NA in df as blanks in excel.csv
+
+```
