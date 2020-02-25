@@ -1,0 +1,44 @@
+---
+title: "corinna_surveydata_shinyapp"
+author: "Corinna Hong"
+date: "February 25, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+
+```{r}
+
+library(tidyverse)
+library(janitor)
+
+```
+
+
+```{r}
+
+# read in data and wrangle for app purposes (this will just be a subset of original survey responses)
+
+shiny_app_data <- read_csv("master_survey_resp.csv") %>%
+  clean_names() %>% 
+  select(-interviewer,
+         -interviewer_org,
+         -boat_status:-comment,
+         -positive_tracking_tech_one:-negative_tracking_tech_two,
+         -tracking_negative,
+         -tracking_positive,
+         -text_vms_adoption,
+         -target_species_one:-target_species_three,
+         -fishing_organization:-punishment_severity,
+         -fishery_problem_one:-fishery_solution_three,
+         -catch_trends:-satisfaction_c,
+         -photo:-last_commends)
+
+
+```
+
